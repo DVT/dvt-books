@@ -11,6 +11,10 @@
     <Folder Include="Controllers\" />
     <Folder Include="Entities\" />
     <Folder Include="Entities\Configurations\" />
+    <Folder Include="Models\" />
+    <Folder Include="Libs\" />
+    <Folder Include="Libs\ComponentModel\" />
+    <Folder Include="Libs\ComponentModel\DataAnnotations\" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="3.1.3" />
