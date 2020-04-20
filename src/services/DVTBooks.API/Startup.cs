@@ -1,12 +1,17 @@
 using System;
+using System.IO;
 using System.Reflection;
 using DVTBooks.API.Entities;
+using DVTBooks.API.Extensions;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.OpenApi.Models;
 
 namespace DVTBooks.API
 {
@@ -35,15 +40,33 @@ namespace DVTBooks.API
                 });
             });
 
-            // TODO: Add controller configuration.
+            services.AddCors();
 
-            // TODO: Add OAuth 2.0 configuration
+            services.AddResponseCaching();
 
-            // TODO: Add Swagger Docs configuration.
-            
+            services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+                .AddJwtBearer(jwtBearerOptions =>
+                {
+                    jwtBearerOptions.Audience = Configuration["Auth0:Audience"];
+                    jwtBearerOptions.Authority = Configuration["Auth0:Domain"];
+                });
+
+            services
+                .AddMvc(options =>
+                {
+                    options.CacheProfiles.Add("Static", new CacheProfile { Location = ResponseCacheLocation.Any, Duration = 86400/*1 day*/ });
+                })
+                .AddNewtonsoftJson(options => options.SerializerSettings.Configure());
+
+            services.AddSwaggerGen(c =>
+            {
+                c.SwaggerDoc("v1", new OpenApiInfo { Title = "Books API", Version = "v1" });
+
+                c.IncludeXmlComments(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "DVTBooks.API.xml"));
+            });
+
         }
 
-        // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
             if (env.IsDevelopment())
@@ -53,18 +76,31 @@ namespace DVTBooks.API
 
             app.UseHttpsRedirection();
 
+            app.UseResponseCaching();
+            app.UseSwagger(c =>
+            {
+                c.RouteTemplate = "api-docs/{documentName}/swagger.json";
+            });
+
+            app.UseSwaggerUI(c =>
+            {
+                c.SwaggerEndpoint("api-docs/v1/swagger.json", "DVT Books API");
+                c.OAuthAppName("DVT Books API");
+                c.OAuthClientId("dvt-books-api");
+            });
+
+            app.UseReDoc();
+
             app.UseRouting();
 
+            app.UseCors(builder => builder.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader().WithExposedHeaders("Location"));
 
-            // TODO: Add swagger configuration
-
-            // TODO: Add authorization configuration.
-
+            app.UseAuthentication();
             app.UseAuthorization();
 
             app.UseEndpoints(endpoints =>
             {
-                endpoints.MapControllers();
+                endpoints.MapDefaultControllerRoute();
             });
         }
     }
