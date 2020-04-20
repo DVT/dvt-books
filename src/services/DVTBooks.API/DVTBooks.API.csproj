@@ -5,8 +5,11 @@
     <DockerComposeProjectPath>../../../docker-compose.dcproj</DockerComposeProjectPath>
     <UserSecretsId>7a58b46b-d715-49f8-b977-07df638cd2f1</UserSecretsId>
   </PropertyGroup>
-
-
+    
+  <PropertyGroup>
+    <DocumentationFile>bin\$(Configuration)\$(TargetFramework)\$(AssemblyName).xml</DocumentationFile>
+  </PropertyGroup>
+  
   <ItemGroup>
     <Folder Include="Controllers\" />
     <Folder Include="Entities\" />

@@ -74,8 +74,6 @@ namespace DVTBooks.API
                 app.UseDeveloperExceptionPage();
             }
 
-            app.UseHttpsRedirection();
-
             app.UseResponseCaching();
             app.UseSwagger(c =>
             {
