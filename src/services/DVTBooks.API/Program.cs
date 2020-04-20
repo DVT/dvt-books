@@ -1,11 +1,11 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+using DVTBooks.API.Entities;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.Extensions.Configuration;
+using Microsoft.Data.SqlClient;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
+using Polly;
 
 namespace DVTBooks.API
 {
@@ -13,7 +13,23 @@ namespace DVTBooks.API
     {
         public static void Main(string[] args)
         {
-            CreateHostBuilder(args).Build().Run();
+            IHost host = CreateHostBuilder(args).Build();
+
+            using (var scope = host.Services.CreateScope())
+            {
+                BooksDbContext context = scope.ServiceProvider.GetService<BooksDbContext>();
+
+                Policy
+                    .Handle<SqlException>()
+                    .WaitAndRetry(3, attempt => TimeSpan.FromSeconds(Math.Pow(2, attempt)))
+                    .Execute(() =>
+                    {
+                        context.Database.Migrate();
+                        new BooksDbContextSeed().SeedAsync(context).Wait();
+                    });
+            }
+
+            host.Run();
         }
 
         public static IHostBuilder CreateHostBuilder(string[] args) =>
