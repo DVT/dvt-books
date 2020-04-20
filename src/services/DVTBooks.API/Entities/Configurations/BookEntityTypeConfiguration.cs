@@ -42,7 +42,7 @@ namespace DVTBooks.API.Entities.Configurations
 
             builder.HasOne(x => x.Author).WithMany(x => x.Books).HasConstraintName("FK_Book_Author");
             builder.HasMany(x => x.Tags).WithOne(x => x.Book).HasConstraintName("FK_Book_BookTag");
-            builder.HasOne(x => x.Image).WithOne(x => x.Book).HasForeignKey<BookImage>(x => x.BookId).HasConstraintName("FK_Book_BookImage");
+            builder.HasOne(x => x.BookImage).WithOne(x => x.Book).HasForeignKey<BookImage>(x => x.BookId).HasConstraintName("FK_Book_BookImage");
         }
     }
 }

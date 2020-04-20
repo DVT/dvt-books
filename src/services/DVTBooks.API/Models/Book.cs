@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using DVTBooks.API.Libs.ComponentModel.DataAnnotations;
 
@@ -42,15 +43,31 @@ namespace DVTBooks.API.Models
         public AuthorRef Author { get; set; }
 
         /// <summary>
+        /// Gets or sets the publisher of the book, if any.
+        /// </summary>
+        [StringLength(255)]
+        public string Publisher { get; set; }
+
+        /// <summary>
+        /// Gets or sets the book's publish date.
+        /// </summary>
+        public DateTimeOffset? PublishedDate { get; set; }
+
+        /// <summary>
         /// Gets or sets the image of the book, if any.
         /// </summary>
         [RelativeOrAbsoluteUrl]
         public string Image { get; set; }
 
         /// <summary>
-        /// Gets or sets a collection of tags associated with the book.
+        /// Gets or sets a collection of tags associated with the book, if any.
         /// </summary>
         public ICollection<Tag> Tags { get; set; }
+
+        /// <summary>
+        /// Gets or sets the version used for optimistic concurrency checking, if any.
+        /// </summary>
+        public byte[] Version { get; set; }
 
     }
 }

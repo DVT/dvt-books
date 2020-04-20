@@ -32,5 +32,10 @@ namespace DVTBooks.API.Models
         /// </summary>
         [Isbn13]
         public string ISBN13 { get; set; }
+
+        /// <summary>
+        /// Gets or sets the title of the book, if any.
+        /// </summary>
+        public string Title { get; set; }
     }
 }

@@ -13,7 +13,7 @@ using Microsoft.Extensions.Configuration;
 namespace DVTBooks.API.Controllers
 {
     /// <summary>
-    /// Represents book authors
+    /// Represents book authors.
     /// </summary>
     [Route("[controller]")]
     public class AuthorsController : Controller
@@ -43,7 +43,7 @@ namespace DVTBooks.API.Controllers
         [Produces("application/json")]
         public async Task<IActionResult> Get(Guid id)
         {
-            Author model = Query().FirstOrDefault(x => x.Id == id);
+            Author model = await Query().FirstOrDefaultAsync(x => x.Id == id);
 
             if (model == null)
                 return NotFound();
@@ -55,12 +55,13 @@ namespace DVTBooks.API.Controllers
         /// Gets a collection of authors.
         /// </summary>
         /// <param name="query">The text to match in the name of the author.</param>
-        /// <param name="skip">The number of authors to skip in the result.</param>
-        /// <param name="top">The number of artist to return in the result.</param>
+        /// <param name="skip">The number of authors to skip for paging.</param>
+        /// <param name="top">The number of artist to skip for paging.</param>
         /// <returns>A collection of authors.</returns>
         [HttpGet]
         [ProducesResponseType(typeof(ICollection<Author>), (int)HttpStatusCode.OK)]
-        public async Task<ICollection<Author>> Get(string query, int? skip = null, int? top = null)
+        [Produces("application/json")]
+        public async Task<ICollection<Author>> Get([FromQuery] string query, [FromQuery] int? skip = null, [FromQuery]int? top = null)
         {
             var model = Query(query);
 
@@ -96,14 +97,11 @@ namespace DVTBooks.API.Controllers
                 model.Id = Guid.NewGuid();
             }
 
-            var author = new Entities.Author
-            {
-                Books = new List<Entities.Book>()
-            };
+            var entity = new Entities.Author();
 
-            _db.Authors.Add(author);
+            _db.Authors.Add(entity);
 
-             MapAuthor(model, author);
+             MapAuthor(model, entity);
 
             await _db.SaveChangesAsync();
 
@@ -189,7 +187,7 @@ namespace DVTBooks.API.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            Author model = Query().FirstOrDefault(x => x.Id == id);
+            Author model = await Query().FirstOrDefaultAsync(x => x.Id == id);
 
             if (model == null)
             {
@@ -247,7 +245,7 @@ namespace DVTBooks.API.Controllers
                    let originalFullName = (author.FirstName + " ") + (author.LastName)
                    where startsWithPattern == null
                        || author.Name.StartsWith(startsWithPattern) || originalFullName.StartsWith(startsWithPattern)
-                       || author.Name.Contains(startsWithPattern) || author.Name.StartsWith(startsWithPattern)
+                       || author.Name.Contains(containsPattern) || author.Name.StartsWith(containsPattern)
                    orderby
                        author.Name.IndexOf(containsPattern) < originalFullName.IndexOf(containsPattern)
                        ? author.Name.IndexOf(containsPattern)

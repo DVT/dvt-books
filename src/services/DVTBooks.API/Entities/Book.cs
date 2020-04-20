@@ -16,7 +16,7 @@ namespace DVTBooks.API.Entities
         public string Publisher { get; set; }
         public byte[] Version { get; set; }
         public virtual Author Author { get; set; }
-        public virtual BookImage Image { get; set; }
+        public virtual BookImage BookImage { get; set; }
         public virtual ICollection<BookTag> Tags { get; set; }
     }
 }
