@@ -24,6 +24,7 @@ namespace DVTBooks.API.Models
         /// <summary>
         /// Gets or sets the ISBN-10 number of the book, if any.
         /// </summary>
+        [Isbn10]
         public string ISBN10 { get; set; }
 
         /// <summary>

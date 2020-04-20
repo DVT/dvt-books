@@ -10,9 +10,14 @@ namespace DVTBooks.API.Models
     public class Author
     {
         /// <summary>
-        /// Gets or sets the global unique identifier (GUID) of the author, if any.
+        /// Gets or sets the hypermedia reference of the author, if any.
         /// </summary>
-        public Guid Guid { get; set; }
+        public string Href { get; set; }
+
+        /// <summary>
+        /// Gets or sets the global unique identifier (GUID) of the author, if any.
+        /// </summary>, if any.
+        public Guid Id { get; set; }
 
         /// <summary>
         /// Gets or sets the first name of the author, if any.

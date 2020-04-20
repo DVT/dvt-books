@@ -19,8 +19,10 @@ namespace DVTBooks.API.Controllers
         private readonly IConfiguration _configuration;
 
         /// <summary>
-        /// Initializes the controller.
+        /// Initializes the controller
         /// </summary>
+        /// <param name="db">The database context.</param>
+        /// <param name="configuration">The application configuration.</param>
         public TagsController(Entities.BooksDbContext db, IConfiguration configuration)
         {
             _db = db;
