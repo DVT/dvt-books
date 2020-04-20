@@ -5,6 +5,7 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_URLS=https://+:443;http://+:80
+      - ConnectionStrings__DVTBooksDb=Server=mssql;Database=DVTBooksDev;User=sa;Password=P@ssw0rd
     ports:
       - 4201:80
       - 4203:443

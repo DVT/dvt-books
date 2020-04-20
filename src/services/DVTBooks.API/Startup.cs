@@ -28,7 +28,7 @@ namespace DVTBooks.API
         {
             services.AddControllers();
 
-            string connectionString = Configuration.GetConnectionString("DVTBooks");
+            string connectionString = Configuration.GetConnectionString("DVTBooksDb");
             string migrationsAssembly = typeof(BooksDbContext).GetTypeInfo().Assembly.GetName().Name;
 
             services.AddDbContext<BooksDbContext>(options =>
@@ -50,7 +50,7 @@ namespace DVTBooks.API
                     jwtBearerOptions.Audience = Configuration["Auth0:Audience"];
                     jwtBearerOptions.Authority = Configuration["Auth0:Domain"];
                 });
-
+            
             services
                 .AddMvc(options =>
                 {
