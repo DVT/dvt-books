@@ -1,0 +1,8 @@
+version: '3.4'
+
+services:
+  booksapi:
+    image: booksapi:latest
+    build:
+      context: .
+      dockerfile: src/services/DVTBooks.API/Dockerfile
