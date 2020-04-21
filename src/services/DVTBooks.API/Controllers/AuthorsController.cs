@@ -212,6 +212,7 @@ namespace DVTBooks.API.Controllers
         {
             string fullName = $"{model.FirstName ?? " "} {model.MiddleNames ?? string.Empty} {model.LastName ?? string.Empty}";
 
+            entity.Guid = model.Id;
             entity.FirstName = model.FirstName;
             entity.MiddleNames = model.MiddleNames;
             entity.LastName = model.LastName;
@@ -254,6 +255,7 @@ namespace DVTBooks.API.Controllers
                    select new Author
                    {
                        Id = author.Guid,
+                       Href = $"{_configuration["BooksApiUri"]}/Authors/{author.Guid}",
                        FirstName = author.FirstName,
                        MiddleNames = author.MiddleNames,
                        LastName = author.LastName,

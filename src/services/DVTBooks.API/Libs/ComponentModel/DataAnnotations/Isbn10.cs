@@ -14,6 +14,9 @@ namespace DVTBooks.API.Libs.ComponentModel.DataAnnotations
         /// <returns>A validation result</returns>
         protected override ValidationResult IsValid(object value, ValidationContext validationContext)
         {
+            if (value == null)
+                return ValidationResult.Success;
+
             var isbnStr = value.ToString();
 
             try

@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using Dvt.Drawing;
 using DVTBooks.API.Models;
 using DVTBooks.API.Serialization;
 using Microsoft.AspNetCore.JsonPatch;
@@ -98,7 +100,11 @@ namespace DVTBooks.API.Controllers
                 return BadRequest(ModelState);
             }
 
-            var entity = new Entities.Book();
+            string isbnDigits = model.ISBN13 != null ? Regex.Replace(model.ISBN13, @"[^\d]", string.Empty, RegexOptions.None) : null;
+            var entity = new Entities.Book
+            {
+                ISBN13 = isbnDigits
+            };
 
             await _db.Books.AddAsync(entity);
 
@@ -144,7 +150,7 @@ namespace DVTBooks.API.Controllers
         /// <summary>
         /// Creates or updates an existing book.
         /// </summary>
-        /// <param name="id">The global unique identifier (GUID) of the book.</param>
+        /// <param name="isbn13">The International Standard Book Number (ISBN).</param>
         /// <param name="model">The book.</param>
         /// <returns>An action result.</returns>
         [HttpPut("{id}")]
@@ -202,7 +208,7 @@ namespace DVTBooks.API.Controllers
         /// <summary>
         /// Partially updates and existing author or creates a new book.
         /// </summary>
-        /// <param name="id">The global unique identifier (GUID) of the author.</param>
+        /// <param name="isbn">The International Standard Book Number (ISBN).</param>
         /// <param name="patch">The RFC 6902 JSON patch document.</param>
         /// <returns>An action result.</returns>
         [HttpPatch("{id}")]
@@ -212,18 +218,18 @@ namespace DVTBooks.API.Controllers
         [ProducesResponseType((int)HttpStatusCode.Conflict)]
         [Consumes("application/json-patch+json")]
         [Produces("application/json")]
-        public async Task<IActionResult> Patch(string isbn13, [FromBody]JsonPatchDocument<Book> patch)
+        public async Task<IActionResult> Patch(string isbn, [FromBody]JsonPatchDocument<Book> patch)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            Book model = await Query().FirstOrDefaultAsync(x => x.ISBN13 == isbn13);
+            Book model = await Query().FirstOrDefaultAsync(x => x.ISBN13 == isbn);
 
             if (model == null)
             {
                 model = new Book
                 {
-                    ISBN13 = isbn13
+                    ISBN13 = isbn
                 };
 
                 patch.ContractResolver = new JsonLowerCaseUnderscoreContractResolver();
@@ -236,6 +242,97 @@ namespace DVTBooks.API.Controllers
             patch.ApplyTo(model, ModelState);
 
             return await Post(model);
+        }
+
+        /// <summary>
+        /// Returns the pictur of a book, if any.
+        /// </summary>
+        /// <param name="isbn">The International Standard Book Number (ISBN).</param>
+        /// <returns>An action result.</returns>
+        [HttpGet("{isbn}/picture")]
+        [ProducesResponseType((int)HttpStatusCode.OK)]
+        [ProducesResponseType((int)HttpStatusCode.NotFound)]
+        [ProducesResponseType((int)HttpStatusCode.NoContent)]
+        [Produces("image/bmp", "image/gif", "image/jpeg", "image/png")]
+        public async Task<IActionResult> GetPicture(string isbn)
+        {
+            var image = await _db.Books
+                .Include(x => x.BookImage)
+                .ThenInclude(x => x.Image)
+                .Where(x => x.ISBN10 == isbn || x.ISBN13 == isbn)
+                .Select(x => x.BookImage.Image)
+                .FirstOrDefaultAsync();
+
+            if (image == null)
+                return NotFound();
+
+            var stream = new MemoryStream(image.Content);
+            return new FileStreamResult(stream, image.ContentType);
+        }
+
+        /// <summary>
+        /// Returns the picture of the book, if any.
+        /// </summary>
+        /// <param name="isbn">The Internation Standard Book Number.</param>
+        /// <param name="_"></param>
+        /// <returns>An action result.</returns>
+        [ApiExplorerSettings(IgnoreApi = true)]
+        [HttpGet("{isbn}/{_}.picture")]
+        [ResponseCache(CacheProfileName = "Static")]
+        [ProducesResponseType((int)HttpStatusCode.OK)]
+        [ProducesResponseType((int)HttpStatusCode.NotFound)]
+        [ProducesResponseType((int)HttpStatusCode.NoContent)]
+        [Produces("image/bmp","image/gif", "image/jpeg", "image/png")]
+        public async Task<IActionResult> GetPictureCached(string isbn, string _ = null)
+        {
+            return await GetPicture(isbn);
+        }
+
+        /// <summary>
+        /// Updates the book picture.
+        /// </summary>
+        /// <param name="isbn">The International Standard Book Number.</param>
+        /// <returns>An action result.</returns>
+        [HttpPut("{id}/picture")]
+        [ProducesResponseType((int)HttpStatusCode.NoContent)]
+        [ProducesResponseType((int)HttpStatusCode.Conflict)]
+        [ProducesResponseType((int)HttpStatusCode.UnsupportedMediaType)]
+        [Consumes("image/bmp", "image/gif", "image/jpeg", "image/png")]
+        public async Task<IActionResult> PutPicture(string isbn)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            if (!new[] { "image/bmp", "image/gif", "image/jpeg", "image/png" }.Contains(Request.ContentType))
+                return new UnsupportedMediaTypeResult();
+
+            Entities.Book book = await _db.Books
+                 .Include(x => x.BookImage)
+                 .ThenInclude(x => x.Image)
+                 .FirstOrDefaultAsync(x => x.ISBN10 == isbn || x.ISBN13 == isbn);
+
+            if (book == null)
+                return NotFound();
+
+            byte[] content;
+
+            using (var resized = new MemoryStream())
+            {
+                ImageHelper.Resize(Request.Body, resized, 196, 196, 75);
+                content = resized.ToArray();
+            }
+
+            var entity = new Entities.Blob
+            {
+                Guid = Guid.NewGuid(),
+                ContentType = Request.ContentType,
+                Content = content
+            };
+
+            book.BookImage.Image = entity;
+            await _db.SaveChangesAsync();
+
+            return NoContent();
         }
 
         private async Task MapBookAsync(Book model, Entities.Book entity)
@@ -289,16 +386,23 @@ namespace DVTBooks.API.Controllers
                 {
                     string description = tag.Href.Substring(tag.Href.LastIndexOf("/") + 1);
 
-                    if(!bookTags.Any(x => string.Equals(x.Tag.Description, description, StringComparison.OrdinalIgnoreCase)))
+                    var tagId = (await _db.Tags.FirstOrDefaultAsync(x => x.Description == description))?.Id;
+
+                    if (tagId != null)
                     {
-                        bookTags.Add(new Entities.BookTag
+                        if (!bookTags.Any(x => string.Equals(x.Tag.Description, description, StringComparison.OrdinalIgnoreCase)))
                         {
-                            Tag = new Entities.Tag
+                            bookTags.Add(new Entities.BookTag
                             {
-                                Description = description
-                            }
-                        });
+                                TagId = tagId.Value
+                            });
+                        }
                     }
+                    else
+                    {
+                        ModelState.AddModelError("tags", "The value is invalid");
+                    }
+
                 }
             }
 
@@ -310,7 +414,9 @@ namespace DVTBooks.API.Controllers
             {
                 foreach (var bookTag in bookTags)
                 {
-                    if (model.Tags != null && !model.Tags.Any(x => string.Equals(bookTag.Tag.Description, x.Href.Substring(x.Href.LastIndexOf("/") + 1), StringComparison.CurrentCultureIgnoreCase)))
+                    var tag = _db.Tags.First(x => x.Id == bookTag.TagId);
+
+                    if (model.Tags != null && !model.Tags.Any(x => string.Equals(tag.Description, x.Href.Substring(x.Href.LastIndexOf("/") + 1), StringComparison.CurrentCultureIgnoreCase)))
                     {
                         bookTags.Remove(bookTag);
                     }
@@ -323,15 +429,14 @@ namespace DVTBooks.API.Controllers
                 _db.Entry(entity).State = EntityState.Modified;
             }
 
-            string isbn10Digits = model.ISBN10 != null ? Regex.Replace(model.ISBN10, @"[^\d]", string.Empty, RegexOptions.None) : null;
-            string isbn13Digits = model.ISBN13 != null ? Regex.Replace(model.ISBN13, @"[^\d]", string.Empty, RegexOptions.None) : null;
 
-            entity.ISBN10 = isbn10Digits;
-            entity.ISBN13 = isbn13Digits;
+            entity.ISBN10 = model.ISBN10;
+            entity.ISBN13 = model.ISBN13;
             entity.Title = model.Title;
             entity.About = model.About;
+            entity.Abstract = model.Abstract;
             entity.Publisher = model.Publisher;
-            entity.DatePublished = model.PublishedDate;
+            entity.DatePublished = model.DatePublished;
             entity.Tags = bookTags;
         }
 
@@ -360,22 +465,25 @@ namespace DVTBooks.API.Controllers
                        ISBN10 = book.ISBN10,
                        ISBN13 = book.ISBN13,
                        Title = book.Title,
-                       About = book.Title,
+                       About = book.About,
+                       Abstract = book.Abstract,
                        Author = new AuthorRef
                        {
                            Id = book.Author.Guid,
                            Href = $"{_configuration["BooksApiUri"]}/Authors/{book.Author.Guid}",
                            Name = book.Author.Name
                        },
+                       Publisher = book.Publisher,
+                       DatePublished = book.DatePublished,
                        Image = book.ImageId != null
                             ? $"{_configuration["BooksApiUri"]}/Books/{book.ISBN13}/${BitConverter.ToUInt64(book.BookImage.Image.Guid.ToByteArray(), 0)}.picture"
                             : null,
-                       Tags = (from tag in _db.Tags
+                       Tags = (from bookTag in book.Tags
                                select new Tag
                                {
-                                   Id = tag.Description,
-                                   Href = $"{_configuration["BooksApiUri"]}/Tags/{tag.Description}",
-                                   Description = tag.Description
+                                   Id = bookTag.Tag.Description,
+                                   Href = $"{_configuration["BooksApiUri"]}/Tags/{bookTag.Tag.Description}",
+                                   Description = bookTag.Tag.Description
                                }).ToList()
                    };
         }

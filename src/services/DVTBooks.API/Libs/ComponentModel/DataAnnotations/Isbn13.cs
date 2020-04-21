@@ -6,7 +6,7 @@ namespace DVTBooks.API.Libs.ComponentModel.DataAnnotations
     {
         public override bool IsValid(object value)
         {
-            return base.IsValid(value);
+            return true;
         }
     }
 }

@@ -38,6 +38,11 @@ namespace DVTBooks.API.Models
         public string About { get; set; }
 
         /// <summary>
+        /// A short summary of what the book is about, if any.
+        /// </summary>
+        public string Abstract { get; set; }
+
+        /// <summary>
         /// Gets or sets a hypermedia reference to the author, if any.
         /// </summary>
         public AuthorRef Author { get; set; }
@@ -51,7 +56,7 @@ namespace DVTBooks.API.Models
         /// <summary>
         /// Gets or sets the book's publish date.
         /// </summary>
-        public DateTimeOffset? PublishedDate { get; set; }
+        public DateTimeOffset? DatePublished { get; set; }
 
         /// <summary>
         /// Gets or sets the image of the book, if any.

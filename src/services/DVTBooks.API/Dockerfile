@@ -16,5 +16,12 @@ RUN dotnet publish "DVTBooks.API.csproj" -c Release -o /app/publish
 
 FROM base AS final
 WORKDIR /app
+
+RUN apt update
+RUN apt install libc6-dev -y
+RUN apt install libgdiplus -y
+RUN cd /usr/lib
+RUN ln -s libgdiplus.so gdiplus.dll
+
 COPY --from=publish /app/publish .
 ENTRYPOINT ["dotnet", "DVTBooks.API.dll"]
