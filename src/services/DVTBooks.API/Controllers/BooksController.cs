@@ -100,10 +100,13 @@ namespace DVTBooks.API.Controllers
                 return BadRequest(ModelState);
             }
 
-            string isbnDigits = model.ISBN13 != null ? Regex.Replace(model.ISBN13, @"[^\d]", string.Empty, RegexOptions.None) : null;
+            string isbn13Digits = model.ISBN13 != null ? Regex.Replace(model.ISBN13, @"[^\d]", string.Empty, RegexOptions.None) : null;
+            string isbn10Digits = model.ISBN10 != null ? Regex.Replace(model.ISBN10, @"[^\d]", string.Empty, RegexOptions.None) : null;
+
             var entity = new Entities.Book
             {
-                ISBN13 = isbnDigits
+                ISBN13 = isbn13Digits,
+                ISBN10 = isbn10Digits
             };
 
             await _db.Books.AddAsync(entity);
@@ -140,7 +143,7 @@ namespace DVTBooks.API.Controllers
             var result = new BookRef
             {
                 Href = $"{_configuration["BooksApiUri"]}/Books/{model.ISBN13}",
-                Id = model.ISBN13,
+                Id = isbn13Digits,
                 Title = model.Title
             };
 
@@ -153,7 +156,7 @@ namespace DVTBooks.API.Controllers
         /// <param name="isbn13">The International Standard Book Number (ISBN).</param>
         /// <param name="model">The book.</param>
         /// <returns>An action result.</returns>
-        [HttpPut("{id}")]
+        [HttpPut("{isbn13}")]
         [Consumes("application/json")]
         [Produces("application/json")]
         [ProducesResponseType(typeof(BookRef), (int)HttpStatusCode.Created)]
@@ -211,7 +214,7 @@ namespace DVTBooks.API.Controllers
         /// <param name="isbn">The International Standard Book Number (ISBN).</param>
         /// <param name="patch">The RFC 6902 JSON patch document.</param>
         /// <returns>An action result.</returns>
-        [HttpPatch("{id}")]
+        [HttpPatch("{isbn}")]
         [ProducesResponseType((int)HttpStatusCode.NoContent)]
         [ProducesResponseType(typeof(AuthorRef), (int)HttpStatusCode.Created)]
         [ProducesResponseType(typeof(IDictionary<string, string[]>), (int)HttpStatusCode.BadRequest)]
@@ -241,7 +244,7 @@ namespace DVTBooks.API.Controllers
             patch.ContractResolver = new JsonLowerCaseUnderscoreContractResolver();
             patch.ApplyTo(model, ModelState);
 
-            return await Post(model);
+            return await Put(isbn, model);
         }
 
         /// <summary>
@@ -429,9 +432,6 @@ namespace DVTBooks.API.Controllers
                 _db.Entry(entity).State = EntityState.Modified;
             }
 
-
-            entity.ISBN10 = model.ISBN10;
-            entity.ISBN13 = model.ISBN13;
             entity.Title = model.Title;
             entity.About = model.About;
             entity.Abstract = model.Abstract;
