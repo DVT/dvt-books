@@ -7,7 +7,7 @@ namespace DVTBooks.API.Libs.ComponentModel.DataAnnotations
     public class Isbn10 : ValidationAttribute
     {
         /// <summary>
-        /// Performs a rudimentary validation on the length of an ISBN-10 number and its check digit.
+        /// Checks that an ISBN-10 number is valid by checking its length and the validity of its check digit.
         /// </summary>
         /// <param name="value">The ISBN-10 number</param>
         /// <param name="validationContext">The validation context</param>
@@ -17,11 +17,17 @@ namespace DVTBooks.API.Libs.ComponentModel.DataAnnotations
             if (value == null)
                 return ValidationResult.Success;
 
-            var isbnStr = value.ToString();
+            var isbnString = value.ToString();
+
+            var endOfIsbnPrefix = isbnString.IndexOf("ISBN-10:", StringComparison.OrdinalIgnoreCase) != -1 ?
+                7 : isbnString.IndexOf("ISBN-10", StringComparison.OrdinalIgnoreCase) != -1 ?
+                6 : -1;
+
+            isbnString = isbnString.Substring(endOfIsbnPrefix + 1);
 
             try
             {
-                var isbnDigits = Regex.Replace(isbnStr, @"[^\d]", string.Empty, RegexOptions.None, TimeSpan.FromMilliseconds(500));
+                var isbnDigits = Regex.Replace(isbnString, @"[^\d]", string.Empty, RegexOptions.None, TimeSpan.FromMilliseconds(500));
 
                 if (isbnDigits.StartsWith("0") && isbnDigits.Length == 10)
                 {
