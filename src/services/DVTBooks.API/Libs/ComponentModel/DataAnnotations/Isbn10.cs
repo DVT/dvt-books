@@ -29,7 +29,7 @@ namespace DVTBooks.API.Libs.ComponentModel.DataAnnotations
             {
                 var isbnDigits = Regex.Replace(isbnString, @"[^\d]", string.Empty, RegexOptions.None, TimeSpan.FromMilliseconds(500));
 
-                if (isbnDigits.StartsWith("0") && isbnDigits.Length == 10)
+                if (isbnDigits.Length == 10)
                 {
 
                     int digitSum = 0;

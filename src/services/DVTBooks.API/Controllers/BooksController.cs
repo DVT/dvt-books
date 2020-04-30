@@ -296,7 +296,7 @@ namespace DVTBooks.API.Controllers
         /// </summary>
         /// <param name="isbn">The International Standard Book Number.</param>
         /// <returns>An action result.</returns>
-        [HttpPut("{id}/picture")]
+        [HttpPut("{isbn}/picture")]
         [ProducesResponseType((int)HttpStatusCode.NoContent)]
         [ProducesResponseType((int)HttpStatusCode.Conflict)]
         [ProducesResponseType((int)HttpStatusCode.UnsupportedMediaType)]
@@ -332,7 +332,18 @@ namespace DVTBooks.API.Controllers
                 Content = content
             };
 
-            book.BookImage.Image = entity;
+            if (book.BookImage == null)
+            {
+                book.BookImage = new Entities.BookImage
+                {
+                    Image = entity
+                };
+            }
+            else
+            {
+                book.BookImage.Image = entity;
+            }
+
             await _db.SaveChangesAsync();
 
             return NoContent();

@@ -265,7 +265,7 @@ namespace DVTBooks.API.Controllers
                        Books = (from book in author.Books
                                 select new BookRef
                                 {
-                                    Href = $"{_configuration["BooksApiUri"]}/Books/${book.ISBN13}",
+                                    Href = $"{_configuration["BooksApiUri"]}/Books/{book.ISBN13}",
                                     Id = book.ISBN13,
                                     ISBN10 = book.ISBN10,
                                     ISBN13 = book.ISBN13
