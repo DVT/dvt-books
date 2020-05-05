@@ -61,7 +61,6 @@ namespace DVTBooks.API.Models
         /// <summary>
         /// Gets or sets the image of the book, if any.
         /// </summary>
-        [RelativeOrAbsoluteUrl]
         public string Image { get; set; }
 
         /// <summary>

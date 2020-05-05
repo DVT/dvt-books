@@ -268,7 +268,8 @@ namespace DVTBooks.API.Controllers
                                     Href = $"{_configuration["BooksApiUri"]}/Books/{book.ISBN13}",
                                     Id = book.ISBN13,
                                     ISBN10 = book.ISBN10,
-                                    ISBN13 = book.ISBN13
+                                    ISBN13 = book.ISBN13,
+                                    Title = book.Title
                                 }).ToList()
                    };
         }

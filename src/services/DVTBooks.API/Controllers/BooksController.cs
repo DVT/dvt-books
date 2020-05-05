@@ -404,7 +404,7 @@ namespace DVTBooks.API.Controllers
 
                     if (tagId != null)
                     {
-                        if (!bookTags.Any(x => string.Equals(x.Tag.Description, description, StringComparison.OrdinalIgnoreCase)))
+                        if (!bookTags.Any(x => x.TagId == tagId))
                         {
                             bookTags.Add(new Entities.BookTag
                             {
@@ -486,9 +486,7 @@ namespace DVTBooks.API.Controllers
                        },
                        Publisher = book.Publisher,
                        DatePublished = book.DatePublished,
-                       Image = book.ImageId != null
-                            ? $"{_configuration["BooksApiUri"]}/Books/{book.ISBN13}/${BitConverter.ToUInt64(book.BookImage.Image.Guid.ToByteArray(), 0)}.picture"
-                            : null,
+                       Image = book.BookImage != null ? $"{_configuration["BooksApiUri"]}/Books/{book.ISBN13}/{BitConverter.ToUInt64(book.BookImage.Image.Guid.ToByteArray(), 0)}.picture" : null,
                        Tags = (from bookTag in book.Tags
                                select new Tag
                                {
